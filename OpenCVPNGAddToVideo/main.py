@@ -4,7 +4,7 @@ import numpy as np
 
 def image_resize_percent(img, percent):
 
-    print('Original Dimensions : ',img.shape)
+    # print('Original Dimensions : ',img.shape)
     width = int(img.shape[1] * percent / 100)
     height = int(img.shape[0] * percent / 100)
     dim = (width, height)
@@ -14,10 +14,38 @@ def image_resize_percent(img, percent):
 
 def image_resize(img, width, height):
 
-    print('Original Dimensions : ',img.shape)
+    # print('Original Dimensions : ',img.shape)
     dim = (width, height)
 
     return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
+
+def image_rotate(img, angle=45, center=None):
+
+    # dividing height and width by 2 to get the center of the image
+    height, width = img.shape[:2]
+    # get the center coordinates of the image to create the 2D rotation matrix
+    if not center:
+        center = (width/2, height/2)
+
+    # using cv2.getRotationMatrix2D() to get the rotation matrix
+    rotate_matrix = cv2.getRotationMatrix2D(center=center, angle=angle, scale=1)
+
+    # rotate the image using cv2.warpAffine
+    rotated_image = cv2.warpAffine(src=img, M=rotate_matrix, dsize=(width, height))
+
+    return rotated_image
+
+
+def image_affine_transformation(img):
+
+    rows,cols,ch = img.shape
+    pts1 = np.float32([[50,50],[200,50],[50,200]])
+    pts2 = np.float32([[10,100],[200,50],[100,250]])
+    M = cv2.getAffineTransform(pts1,pts2)
+    dst = cv2.warpAffine(img,M,(cols,rows))
+
+    return dst
 
 
 def overlay_transparent(background, overlay, x, y):
@@ -58,10 +86,16 @@ def overlay_transparent(background, overlay, x, y):
 
 
 if __name__ == "__main__":
+
     png = cv2.imread('./media/pencil_small.png', cv2.IMREAD_UNCHANGED)
-    png = image_resize(png, 10, 35)
+
+    # png = image_resize_percent(png, 300)
+    # png = image_rotate(png, 0)
+    # png = image_affine_transformation(png)
     # png = cv2.cvtColor(png, cv2.COLOR_RGB2BGR)
+
     cap = cv2.VideoCapture(0)
+
     while True:
 
         _, frame = cap.read()
