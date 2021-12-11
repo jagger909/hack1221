@@ -1,6 +1,25 @@
 import cv2
 import numpy as np
 
+
+def image_resize_percent(img, percent):
+
+    print('Original Dimensions : ',img.shape)
+    width = int(img.shape[1] * percent / 100)
+    height = int(img.shape[0] * percent / 100)
+    dim = (width, height)
+
+    return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
+
+def image_resize(img, width, height):
+
+    print('Original Dimensions : ',img.shape)
+    dim = (width, height)
+
+    return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
+
 def overlay_transparent(background, overlay, x, y):
 
     background_width = background.shape[1]
@@ -39,7 +58,8 @@ def overlay_transparent(background, overlay, x, y):
 
 
 if __name__ == "__main__":
-    png = cv2.imread('media/pencil_small.png', cv2.IMREAD_UNCHANGED)
+    png = cv2.imread('./media/pencil_small.png', cv2.IMREAD_UNCHANGED)
+    png = image_resize(png, 10, 35)
     # png = cv2.cvtColor(png, cv2.COLOR_RGB2BGR)
     cap = cv2.VideoCapture(0)
     while True:
