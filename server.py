@@ -73,15 +73,19 @@ class VideoTransformTrack(MediaStreamTrack):
         self.transform = transform
         self.last_timeout = time.time()
         self.last_image = cv2.imread("e:\\1x1.png")
-
+        self.classes = model.names
+        
     async def recv(self):
         frame = await self.track.recv()
 
         if self.transform == "cartoon":
             img = frame.to_ndarray(format="bgr24")
             
-            if time.time()-self.last_timeout < 7:
-                img = overlay_transparent(img, self.last_image, 100, 100)
+            if time.time()-self.last_timeout < 7 and self.last_image is not None:
+                r = 640/img.shape[1]
+                self.last_image = cv2.resize(self.last_image, (int(320/r), int(240/r)), interpolation = cv2.INTER_AREA)
+                img[30:30+self.last_image.shape[0], 30:30+self.last_image.shape[1]] = self.last_image
+                #img = overlay_transparent(img, self.last_image, 100, 100)
             else:
                 yolo_results = model(img)
                 labels = yolo_results.xyxyn[0][:, -1].tolist()
@@ -89,8 +93,10 @@ class VideoTransformTrack(MediaStreamTrack):
                 for rect in yolo_results.xyxy[0].detach().tolist():
                     if (rect[4] > THRESHHOLD):                    
                         #cv2.rectangle(img, (int(rect[0]), int(rect[1])), (int(rect[2]), int(rect[3])), (0, 255, 0), 1)
-                        self.last_image = texter.show_img(int(labels[0]))
-                        self.last_timeout = time.time()
+                        z = texter.show_img(self.classes[int(labels[0])])
+                        if z is not None:
+                            self.last_image = z 
+                            self.last_timeout = time.time()
 
             new_frame = VideoFrame.from_ndarray(img, format="bgr24")
             new_frame.pts = frame.pts
@@ -195,7 +201,7 @@ async def on_shutdown(app):
 
 
 if __name__ == "__main__":
-    model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5l6', pretrained=True)
     
     parser = argparse.ArgumentParser(
         description="WebRTC audio / video / data-channels demo"
